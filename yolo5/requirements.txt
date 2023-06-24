@@ -4,5 +4,7 @@ loguru
 
 # testing
 
+boto3
+
 pylint
 pytest
