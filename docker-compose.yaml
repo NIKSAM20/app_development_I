@@ -1,18 +1,53 @@
+version: "3"
+networks:
+  object-detection:
+    name: object-detection
+    driver: bridge
 services:
-  frontend:
-    build: frontend
-    ports:
-      - 8082
-      
-    depends_on: 
-      - mongo
-      - yolo5
 
-  mongo:
-    image: mongo
+  frontend:
+    image: frontend:nikhil
+    container_name: frontend
     ports:
-      - 27017
+      - "8082:8082"
+    depends_on:
+          - yolo5
+          - mongodb
+    environment:
+      - HOST_MACHINE=host.docker.internal
+      - MONGO_USERNAME=root
+      - MONGO_PASSWORD=example
+    networks:
+      - object-detection
 
   yolo5:
-    ...
-    
+    image: yolo5:nikhil
+    container_name: yolo5
+    ports:
+      - 8081:8081
+    networks:
+      - object-detection    
+
+  polybot:
+    image: polybot:nikhil
+    container_name: polybot
+    depends_on:
+      - yolo5
+      - mongodb
+    environment:
+      - MONGO_USERNAME=root
+      - MONGO_PASSWORD=example
+    networks:
+      - object-detection
+    volumes:
+      - ./photos:/usr/src/app/photos
+
+  mongodb:
+    image: mongo
+    container_name: mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    networks:
+      - object-detection
