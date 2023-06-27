@@ -1,8 +1,9 @@
 FROM python:3.8.17-slim-bullseye
-
 WORKDIR /app
-
-COPY . /app
+COPY requirements.txt requirements.txt
 
 RUN pip install -r requirements.txt
-CMD [ "python", "app.py" ]
+
+COPY . .
+
+CMD ["python3", "app.py"]
