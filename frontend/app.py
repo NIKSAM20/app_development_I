@@ -7,7 +7,7 @@ import requests
 from loguru import logger
 from pymongo import MongoClient, DESCENDING
 
-app = Flask(name, static_url_path='')
+app = Flask(__name__, static_url_path='')
 
 # YOLO_URL = 'http://yolo5:8081'
 # MONGO_URL = 'mongodb://localhost:27017'
@@ -67,7 +67,7 @@ def recent():
     return render_template('result.html', filename='', summary='No recent detection found', detections={})
 
 
-if name == "main":
+if __name__ == "__main__":
     app.config['UPLOAD_FOLDER'] = 'static/data'
 
     # logger.info(f'Initializing MongoDB connection')
