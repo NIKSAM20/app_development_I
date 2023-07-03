@@ -4,10 +4,8 @@ import os
 import requests
 from collections import Counter
 
-import time
+YOLO_URL = f'http://yolo5:8081'
 
-# from werkzeug.utils import secure_filename
-from pymongo import MongoClient, DESCENDING
 
 class Bot:
 
@@ -75,97 +73,40 @@ class QuoteBot(Bot):
             self.send_text_with_quote(message.text, message_id=message.message_id)
 
 
-# ObjectDetectionBot class, inherits from Bot
 class ObjectDetectionBot(Bot):
-
-    def detect(self, photo_file):
-        # file = request.files['file']
-        # filename = secure_filename(file.filename)
-        # file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        
-        # p = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        p = photo_file
-
-        logger.info(f'request detect service with {p}')
-
-        logger.info(f'YOLO_URL: {YOLO_URL}')
-
-        # file = open(p, 'rb')
-
-        res = requests.post(f'{YOLO_URL}/predict', files={
-            'file': (p, open(p, 'rb'), 'image/png')
-        })
-
-        detections = res.json()
-        logger.info(f'response from detect service with {detections}')
-
-        # calc summary
-        element_counts = Counter([l['class'] for l in detections])
-        summary = ''
-        for element, count in element_counts.items():
-            summary += f"{element}: {count}\n"
-
-        self.send_text(f'{summary}')
-
-        # write result to mongo
-        logger.info('writing results to db')
-        document = {
-            'client_ip': self.current_msg.chat.id,
-            'detections': detections,
-            'filename': photo_file,
-            'summary': summary,
-            'time': time.time()
-        }
-
-        inserted_document = client['objectDetection']['predictions'].insert_one(document)
-        logger.info(f'inserted document id {inserted_document.inserted_id}')
-
-
     def handle_message(self, message):
-        # logger.info(f'Incoming message: {message}')
-
-        # if message.text != 'Please don\'t quote me':
-        #     self.send_text_with_quote(message.text, message_id=message.message_id)
+        logger.info(f'Incoming message: {message}')
 
         if self.is_current_msg_photo():
-            self.send_text('Got your photo, analyzing it now...')
-
-            # Download the photo
             photo_path = self.download_user_photo()
-            logger.info(f'photo_path: {photo_path}')
 
-            # Upload the photo to the object detection service
-            self.detect(photo_path)
+            # Send the photo to the YOLO service for object detection
+            res = requests.post(f'{YOLO_URL}/predict', files={
+                'file': (photo_path, open(photo_path, 'rb'), 'image/png')
+            })
+
+            if res.status_code == 200:
+                detections = res.json()
+                logger.info(f'response from detect service with {detections}')
+
+                # calc summary
+                element_counts = Counter([l['class'] for l in detections])
+                summary = 'Objects Detected:\n'
+                for element, count in element_counts.items():
+                    summary += f"{element}: {count}\n"
+
+                self.send_text(summary)
+
+            else:
+                self.send_text('Failed to perform object detection. Please try again later.')
 
         else:
-            self.send_text('Please send me a photo')
+            self.send_text('Please send a photo for object detection.')
 
 
 if __name__ == '__main__':
-    # TODO - in the 'polyBot' dir, create a file called .telegramToken and store your bot token there.
-    #  ADD THE .telegramToken FILE TO .gitignore, NEVER COMMIT IT!!!
     with open('.telegramToken') as f:
         _token = f.read()
 
-    YOLO_URL = 'http://yolo5:8081'
-
-    logger.info(f'Initializing MongoDB connection')
-
-    # We can set MONGO_HOST to be the name of the mongo service in docker-compose.yml (here it's 'mongodb')
-    MONGO_HOST = os.getenv('MONGO_HOST', "mongodb")
-    
-    MONGO_USERNAME = os.getenv('MONGO_USERNAME', "")
-    MONGO_PASSWORD = os.getenv('MONGO_PASSWORD', "")
-
-    # MONGO_URL = 'mongodb://localhost:27017'
-    MONGO_URL = f'mongodb://{MONGO_USERNAME}:{MONGO_PASSWORD}@{MONGO_HOST}:27017/'
-    
-    # client = MongoClient(MONGO_URL, username=f'{MONGO_USERNAME}',password=f'{MONGO_PASSWORD}')
-    client = MongoClient(MONGO_URL)
-
-    # Start the bot
-    # my_bot = Bot(_token)
-    # my_bot = QuoteBot(_token)
     my_bot = ObjectDetectionBot(_token)
-
     my_bot.start()
