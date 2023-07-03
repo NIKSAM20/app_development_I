@@ -1,10 +1,10 @@
 flask
 pyyaml
 loguru
+boto3
+python-dotenv
 
 # testing
-
-boto3
 
 pylint
 pytest
