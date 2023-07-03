@@ -36,9 +36,9 @@ services:
     restart: always
     ports:
       - "27017:27017"
-    volumes:
-      - mongodb:/data/db
-      - ./mongo/data:/data/db
+    # volumes:
+    #   - mongodb:/data/db
+    #   - ./mongo/data:/data/db
 
   polybot:
     container_name: polybot
