@@ -6,11 +6,18 @@ from werkzeug.utils import secure_filename
 import requests
 from loguru import logger
 from pymongo import MongoClient, DESCENDING
+from dotenv.main import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__, static_url_path='')
 
-# YOLO_URL = 'http://yolo5:8081'
-# MONGO_URL = 'mongodb://localhost:27017'
+# HOST_MACHINE = os.getenv('HOST_MACHINE', "localhost")
+
+YOLO_URL = f'http://yolo5:8081'
+
+
+# MONGO_URL = f'mongodb://mongodb:27017'
 
 @app.route('/', methods=['POST'])
 def upload_file():
@@ -62,7 +69,8 @@ def recent():
         sort=[('time', DESCENDING)])
 
     if doc:
-        return render_template('result.html', filename=f'data/{doc["filename"]}', summary=doc['summary'], detections=doc['detections'])
+        return render_template('result.html', filename=f'data/{doc["filename"]}', summary=doc['summary'],
+                               detections=doc['detections'])
 
     return render_template('result.html', filename='', summary='No recent detection found', detections={})
 
@@ -70,28 +78,7 @@ def recent():
 if __name__ == "__main__":
     app.config['UPLOAD_FOLDER'] = 'static/data'
 
-    # logger.info(f'Initializing MongoDB connection')
-    # client = MongoClient(MONGO_URL)
-
-    # app.run(host='0.0.0.0', port=8082, debug=True)
-
-    # We can use docker-compose service name as well (here it's 'yolo5') with port 8081
-    YOLO_URL = 'http://yolo5:8081'
-
     logger.info(f'Initializing MongoDB connection')
-
-    # We can set MONGO_HOST to be the name of the mongo service in docker-compose.yml (here it's 'mongodb')
-    MONGO_HOST = os.getenv('MONGO_HOST', "mongodb")
-    
-    MONGO_USERNAME = os.getenv('MONGO_USERNAME', "")
-    MONGO_PASSWORD = os.getenv('MONGO_PASSWORD', "")
-
-    # MONGO_URL = 'mongodb://localhost:27017'
-    MONGO_URL = f'mongodb://{MONGO_USERNAME}:{MONGO_PASSWORD}@{MONGO_HOST}:27017/'
-    
+    MONGO_URL = f'mongodb://mongodb:27017'
     client = MongoClient(MONGO_URL)
-
-    PORT = os.getenv('PORT', 8082)
-    logger.info(f'frontend is up, running on port {PORT}')
-
-    app.run(host='0.0.0.0', port=PORT, debug=True)
+    app.run(host='0.0.0.0', port=8082, debug=True)
