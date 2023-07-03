@@ -1,53 +1,64 @@
-version: "3"
-networks:
-  object-detection:
-    name: object-detection
-    driver: bridge
-services:
+version: '3.8'
 
-  frontend:
-    image: frontend:nikhil
-    container_name: frontend
+services:
+  web:
+    container_name: web
+    build: frontend
+    image: niksam20_frontend:0.0.1
+    networks:
+      - object-detection-private
+      - object-detection-public
     ports:
       - "8082:8082"
     depends_on:
-          - yolo5
-          - mongodb
-    environment:
-      - HOST_MACHINE=host.docker.internal
-      - MONGO_USERNAME=root
-      - MONGO_PASSWORD=example
-    networks:
-      - object-detection
+      - mongodb
+      - yolo5
 
   yolo5:
-    image: yolo5:nikhil
     container_name: yolo5
-    ports:
-      - 8081:8081
+    build: yolo5
     networks:
-      - object-detection    
-
-  polybot:
-    image: polybot:nikhil
-    container_name: polybot
-    depends_on:
-      - yolo5
-      - mongodb
+      - object-detection-private
+    image: niksam20_yolo5:0.0.1
     environment:
-      - MONGO_USERNAME=root
-      - MONGO_PASSWORD=example
-    networks:
-      - object-detection
-    volumes:
-      - ./photos:/usr/src/app/photos
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+    ports:
+      - "8081:8081"
 
   mongodb:
-    image: mongo
     container_name: mongodb
-    restart: always
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
+    image: mongo:latest
+
     networks:
-      - object-detection
+      - object-detection-private
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb:/data/db
+      - ./mongo/data:/data/db
+
+  polybot:
+    container_name: polybot
+    image: niksam20_polybot:0.0.1
+    networks:
+      - object-detection-private
+      - object-detection-public
+    depends_on:
+      - yolo5
+
+
+volumes:
+  mongodb:
+    driver: local
+
+networks:
+  object-detection-public:
+    name: object-detection-public
+    driver: bridge
+
+  object-detection-private:
+    name: object-detection-private
+    driver: bridge
