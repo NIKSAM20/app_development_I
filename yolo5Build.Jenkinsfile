@@ -22,8 +22,8 @@ pipeline {
         stage('Push to ECR') {
             steps {
                 sh '''
-                docker tag nikhil-yolo5:latest 854171615125.dkr.ecr.us-west-2.amazonaws.com/nikhil-yolo5:${BUILD_NUMBER}
-                docker push 854171615125.dkr.ecr.us-west-2.amazonaws.com/nikhil-yolo5:${BUILD_NUMBER}
+                docker tag nikhil-yolo5:latest 854171615125.dkr.ecr.us-west-2.amazonaws.com/nikhil-yolo5:0.0.${BUILD_NUMBER}
+                docker push 854171615125.dkr.ecr.us-west-2.amazonaws.com/nikhil-yolo5:0.0.${BUILD_NUMBER}
                 '''
 
             }
