@@ -27,8 +27,8 @@ pipeline {
         stage('Push to ECR') {
             steps {
                 sh '''
-                docker tag nikhil-yolo5:latest ${ECR_URL}/nikhil-yolo5:${BUILD_NUMBER}
-                docker push ${ECR_URL}/${REPO_NAME}:${BUILD_NUMBER}
+                docker tag nikhil-yolo5:latest ${ECR_URL}/nikhil-yolo5:0.${BUILD_NUMBER}
+                docker push ${ECR_URL}/${REPO_NAME}:0.${BUILD_NUMBER}
                 '''
 
             }
